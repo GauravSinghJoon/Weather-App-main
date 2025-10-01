@@ -1,42 +1,108 @@
-let weather = {
-    "apiKey": "5277366efc22ee53ec239b2d6153696b",
-    fetchWeather: function(city) {
-        fetch("https://api.openweathermap.org/data/2.5/weather?q=" +
-                city +
-                "&units=metric&appid=" +
-                this.apiKey
-            ).then((response) => response.json())
-            .then((data) => this.displayWeather(data));
-    },
-    displayWeather: function(data) {
-        const { name } = data;
-        const { icon, description } = data.weather[0];
-        const { temp, humidity } = data.main;
-        const { speed } = data.wind;
-        
-
-        //console.log(name, icon, description, temp, humidity, speed);
-        document.querySelector(".city").innerText = "Weather in " + name;
-        document.querySelector(".icon").src ="http://openweathermap.org/img/wn/" + icon + ".png";
-        document.querySelector(".description").innerText = description;
-        document.querySelector(".temp").innerText = temp + "°C" ;
-        document.querySelector(".humidity").innerText = "Humidity: " + humidity + "%";
-        document.querySelector(".wind").innerText = "Wind Speed: " + speed + "km/hr";
-        
-        document.querySelector(".weather").classList.remove("loading");
-        document.body.style.backgroundImage = "url('http://source.unsplash.com/1600x900/?"  + name + " ')"
-    },
-    search: function() {
-        this.fetchWeather(document.querySelector(".search-bar").value)
+document.querySelectorAll('.nav-links a, .btn').forEach(link => {
+  link.addEventListener('click', function (e) {
+    const target = this.getAttribute('href');
+    if (target && target.startsWith('#')) {
+      e.preventDefault();
+      document.querySelector(target).scrollIntoView({ behavior: 'smooth' });
     }
-};
-document.querySelector(".search button")
-    .addEventListener("click", function() 
-    {
-        weather.search();
-    });
-document.querySelector(".search-bar")
-    .addEventListener("keyup", function(event) {
-        if (event.key == "Enter")
-            weather.search();
-    });
+  });
+});
+
+window.addEventListener('DOMContentLoaded', function() {
+  const section = document.getElementById('home');
+  if (section) {
+    section.scrollIntoView({ behavior: 'smooth' });
+  }
+});
+
+const projects = [
+  {
+    title: 'Weather Application',
+    image: 'images/weather-app.png',
+    description: 'JavaScript, OpenWeatherMap API<br>Dynamic UI showing real-time weather conditions by location.',
+    link: 'https://weathersitegsj.netlify.app/'
+  },
+  {
+    title: 'PathWise Career Finder',
+    image: 'images/pathwise.png',
+    description: 'Python, Flask, Word2Vec<br>Interactive career guidance tool using NLP and AI similarity scoring.'
+  },
+  {
+    title: 'Hotel Management System',
+    image: 'images/hotel-mgmt.png',
+    description: 'Python, Tkinter<br>GUI for room booking, payments, and staff management.'
+  }
+];
+
+let idx = 0,
+    autoScroll,
+    scrollPaused = false;
+const AUTOSCROLL_INTERVAL = 6500;
+
+function showCard(index, fast = false) {
+  const cardContainer = document.querySelector('.carousel-card');
+  const existingCard = cardContainer.querySelector('.project-card');
+  if (existingCard && !fast) {
+    cardContainer.style.height = existingCard.offsetHeight + 'px';
+
+    existingCard.classList.remove('fade-in');
+    existingCard.classList.add('fade-out');
+    existingCard.addEventListener('animationend', () => {
+      renderProjectCard(index, cardContainer);
+      cardContainer.style.height = 'auto'; // Reset height after new card renders
+    }, { once: true });
+  } else {
+    renderProjectCard(index, cardContainer);
+  }
+  updateDots(index);
+}
+
+function renderProjectCard(index, container) {
+  const p = projects[index];
+  container.innerHTML = `
+    <div class="project-card fade-in">
+      ${
+        p.link
+          ? `<a href="${p.link}" target="_blank" rel="noopener"><img src="${p.image}" alt="${p.title}"></a>`
+          : `<img src="${p.image}" alt="${p.title}">`
+      }
+      <h3>${p.title}</h3>
+      <p>${p.description}</p>
+    </div>
+  `;
+}
+
+function updateDots(index) {
+  const dotsContainer = document.querySelector('.carousel-dots');
+  dotsContainer.innerHTML = '';
+  projects.forEach((_, i) => {
+    const dot = document.createElement('button');
+    dot.className = 'carousel-dot' + (i === index ? ' active' : '');
+    dot.setAttribute('aria-label', `Project ${i + 1}`);
+    dot.onclick = () => {
+      idx = i;
+      scrollPaused = true;
+      showCard(idx);
+      resetAutoScroll();
+    };
+    dotsContainer.appendChild(dot);
+  });
+}
+
+function startAutoScroll() {
+  autoScroll = setInterval(() => {
+    if (!scrollPaused) {
+      idx = (idx + 1) % projects.length;
+      showCard(idx);
+    }
+  }, AUTOSCROLL_INTERVAL);
+}
+
+function resetAutoScroll() {
+  clearInterval(autoScroll);
+  scrollPaused = false;
+  startAutoScroll();
+}
+
+showCard(idx, true);
+startAutoScroll();
